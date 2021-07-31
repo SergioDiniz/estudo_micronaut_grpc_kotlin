@@ -1,0 +1,30 @@
+micronaut:
+  application:
+    name: grpckeymanager
+
+datasources:
+  default:
+    url: ${DATASOURCE_URL:`jdbc:postgresql://localhost:5432/key_manger_db`}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    auto-commit: true
+    maximum-pool-size: 50
+    minimum-idle: 2
+    idle-timeout: 600000
+    data-source-properties:
+      reWriteBatchInserts: true
+      disableColumnSanitiser: true
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create
+        show_sql: true
+
+
+itau:
+  contas:
+    url: ${ITAU_ERP_URL:`http://localhost:9091`}

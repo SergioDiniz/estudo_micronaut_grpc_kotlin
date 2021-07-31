@@ -1,0 +1,13 @@
+{
+  "details": {
+    "endpoint": "http://localhost:50051",
+    "methodFqn": "br.com.zup.edu.KeyManagerService.removerChavePix"
+  },
+  "requests": [
+    {
+      "location": "removerChavePix-request.json"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "grpc"
+}

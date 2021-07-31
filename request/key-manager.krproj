@@ -1,0 +1,21 @@
+{
+  "id": "c48b8ae9-53ef-4f7b-a47d-b4d101e6af44",
+  "importStreams": [
+    {
+      "id": "b4fc91cc-2daa-435f-ba95-58fa4ea8181d",
+      "name": "protos",
+      "importerName": "ProtoFile",
+      "createMissingOperations": true,
+      "options": {
+        "files": [
+          "../grpckeymanager/src/main/proto/grpckeymanager.proto",
+          "../grpckeymanager/src/main/proto/helloworld.proto",
+          "../grpckeymanager/src/main/proto/keymanager.proto"
+        ],
+        "importPaths": []
+      }
+    }
+  ],
+  "authConfigs": [],
+  "certificates": []
+}

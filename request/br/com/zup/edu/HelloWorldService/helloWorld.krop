@@ -1,0 +1,15 @@
+{
+  "details": {
+    "endpoint": "http://localhost:50051",
+    "methodFqn": "br.com.zup.edu.HelloWorldService.helloWorld",
+    "mode": "grpc",
+    "disableServerCertificateValidation": false
+  },
+  "requests": [
+    {
+      "location": "helloWorld-request.json"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "grpc"
+}
