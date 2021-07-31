@@ -5,12 +5,14 @@ option java_package = "br.com.zup.edu";
 option java_outer_classname = "Keymanager";
 option objc_class_prefix = "HLW";
 
+import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 package br.com.zup.edu;
 
 service KeyManagerService {
   rpc registraChavePix(RegistraChavePixRequest) returns (RegistraChavePixResponse) {}
   rpc removerChavePix(RemoverChavePixRequest) returns (google.protobuf.Empty) {}
+  rpc listarChavePix(ListarChavePixRequest) returns (ListarChavePixResponse) {}
 }
 
 message RegistraChavePixRequest{
@@ -29,6 +31,22 @@ message RemoverChavePixRequest{
   string codigoCliente = 2;
 }
 
+message ListarChavePixRequest{
+  string clienteId = 1;
+}
+
+message ListarChavePixResponse{
+  repeated ChavePixResponse chavesPix = 1;
+}
+
+message ChavePixResponse{
+  string pixId = 1;
+  string clienteId = 2;
+  TipoChave tipoChave = 3;
+  string valorChave = 4;
+  TipoConta tipoConta = 5;
+  google.protobuf.Timestamp dataCriacao = 6;
+}
 
 enum TipoChave{
   CPF = 0;

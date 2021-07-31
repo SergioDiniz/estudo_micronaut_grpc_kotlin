@@ -1,0 +1,13 @@
+{
+  "details": {
+    "endpoint": "http://localhost:50051",
+    "methodFqn": "br.com.zup.edu.KeyManagerService.listarChavePix"
+  },
+  "requests": [
+    {
+      "location": "listarChavePix-request.json"
+    }
+  ],
+  "operationType": "serverStreaming",
+  "invokerName": "grpc"
+}

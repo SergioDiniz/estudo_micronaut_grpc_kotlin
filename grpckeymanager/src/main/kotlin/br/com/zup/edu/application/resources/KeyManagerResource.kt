@@ -1,6 +1,9 @@
 package br.com.zup.edu.application.resources
 
+import br.com.zup.edu.ChavePixResponse
 import br.com.zup.edu.KeyManagerServiceGrpc
+import br.com.zup.edu.ListarChavePixRequest
+import br.com.zup.edu.ListarChavePixResponse
 import br.com.zup.edu.RegistraChavePixRequest
 import br.com.zup.edu.RegistraChavePixResponse
 import br.com.zup.edu.RemoverChavePixRequest
@@ -11,6 +14,7 @@ import br.com.zup.edu.application.exceptions.ChavePixJaCadastradaException
 import br.com.zup.edu.application.exceptions.ChavePixNaoCadastradaException
 import br.com.zup.edu.application.exceptions.ClienteNaoEncontradoException
 import br.com.zup.edu.application.extension.toDomain
+import br.com.zup.edu.application.extension.toGoogleTimestamp
 import br.com.zup.edu.domain.repositories.ChavePixRepository
 import br.com.zup.edu.application.integration.ErpItauIntegration
 import com.google.protobuf.Empty
@@ -72,6 +76,31 @@ class KeyManagerResource(
         }.onFailure { ex ->
             if(ex is ChavePixNaoCadastradaException) responseObserver.onError(Status.NOT_FOUND.asRuntimeException())
             else responseObserver.onError(Status.INTERNAL.withDescription(ex.message).asRuntimeException())
+        }
+    }
+
+    override fun listarChavePix(request: ListarChavePixRequest, responseObserver: StreamObserver<ListarChavePixResponse>){
+        runCatching {
+            val builder = ListarChavePixResponse.newBuilder()
+
+            logger.info("Consultando todos as chaves pix para o cliente ${request.clienteId}")
+            chavePixRepository.findAllByClientId(request.clienteId).map { chave ->
+                builder.addChavesPix(
+                    ChavePixResponse.newBuilder()
+                        .setPixId(chave.id.toString())
+                        .setClienteId(chave.clientId)
+                        .setTipoChave(chave.tipoChave)
+                        .setValorChave(chave.chave)
+                        .setTipoConta(chave.tipoConta)
+                        .setDataCriacao(chave.criadaEm.toGoogleTimestamp())
+                        .build()
+                )
+            }
+            
+            responseObserver.onNext(builder.build())
+            responseObserver.onCompleted()
+        }.onFailure { ex ->
+            responseObserver.onError(Status.INTERNAL.withDescription(ex.message).asRuntimeException())
         }
     }
 
