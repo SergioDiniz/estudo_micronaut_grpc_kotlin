@@ -1,4 +1,4 @@
-package br.com.zup.edu.application.dtos
+package br.com.zup.edu.application.dtos.bcb
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime

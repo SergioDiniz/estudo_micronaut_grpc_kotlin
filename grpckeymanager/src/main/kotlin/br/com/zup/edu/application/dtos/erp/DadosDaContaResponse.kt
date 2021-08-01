@@ -1,4 +1,4 @@
-package br.com.zup.edu.application.dtos
+package br.com.zup.edu.application.dtos.erp
 
 import java.util.*
 

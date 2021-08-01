@@ -1,9 +1,9 @@
 package br.com.zup.edu.application.integration
 
-import br.com.zup.edu.application.dtos.CreatePixKeyRequest
-import br.com.zup.edu.application.dtos.CreatePixKeyResponse
-import br.com.zup.edu.application.dtos.DeletePixKeyRequest
-import br.com.zup.edu.application.dtos.DeletePixKeyResponse
+import br.com.zup.edu.application.dtos.bcb.CreatePixKeyRequest
+import br.com.zup.edu.application.dtos.bcb.CreatePixKeyResponse
+import br.com.zup.edu.application.dtos.bcb.DeletePixKeyRequest
+import br.com.zup.edu.application.dtos.bcb.DeletePixKeyResponse
 import io.micronaut.http.HttpHeaders.ACCEPT
 import io.micronaut.http.HttpHeaders.CONTENT_TYPE
 import io.micronaut.http.HttpResponse

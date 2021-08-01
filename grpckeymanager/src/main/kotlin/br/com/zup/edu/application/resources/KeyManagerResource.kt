@@ -12,9 +12,9 @@ import br.com.zup.edu.RegistraChavePixResponse
 import br.com.zup.edu.RemoverChavePixRequest
 import br.com.zup.edu.TipoChave
 import br.com.zup.edu.TipoConta
-import br.com.zup.edu.application.dtos.CreatePixKeyRequest
-import br.com.zup.edu.application.dtos.DadosDaContaResponse
-import br.com.zup.edu.application.dtos.DeletePixKeyRequest
+import br.com.zup.edu.application.dtos.bcb.CreatePixKeyRequest
+import br.com.zup.edu.application.dtos.erp.DadosDaContaResponse
+import br.com.zup.edu.application.dtos.bcb.DeletePixKeyRequest
 import br.com.zup.edu.application.exceptions.ChaveNaoPertenceAoClienteException
 import br.com.zup.edu.application.exceptions.ChavePixJaCadastradaException
 import br.com.zup.edu.application.exceptions.ChavePixNaoCadastradaException
@@ -23,7 +23,8 @@ import br.com.zup.edu.application.extension.toDomain
 import br.com.zup.edu.application.extension.toGoogleTimestamp
 import br.com.zup.edu.application.integration.BCBIntegration
 import br.com.zup.edu.domain.repositories.ChavePixRepository
-import br.com.zup.edu.application.integration.ErpItauIntegration
+import br.com.zup.edu.application.integration.ERPItauIntegration
+import br.com.zup.edu.domain.entites.ChavePix
 import com.google.protobuf.Empty
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
@@ -35,7 +36,7 @@ import javax.inject.Singleton
 @Singleton
 class KeyManagerResource(
     private val chavePixRepository: ChavePixRepository,
-    private val erpItauIntegration: ErpItauIntegration,
+    private val erpItauIntegration: ERPItauIntegration,
     private val bcbIntegration: BCBIntegration
 ) : KeyManagerServiceGrpc.KeyManagerServiceImplBase() {
 
@@ -55,11 +56,14 @@ class KeyManagerResource(
             val chavePix = if(request.tipoChave != TipoChave.ALEATORIA) request.toDomain()
                            else request.toDomain().copy(chave = bcbResponse.chave)
 
-            val response = RegistraChavePixResponse.newBuilder()
-                .setPixId(chavePixRepository.save(chavePix).id.toString())
-                .build()
+            logger.info("Salvando chave PIX")
+            chavePixRepository.save(chavePix)
 
-            responseObserver.onNext(response)
+            responseObserver.onNext(
+                RegistraChavePixResponse.newBuilder()
+                    .setPixId(chavePix.id.toString())
+                    .build()
+            )
             responseObserver.onCompleted()
         }.onFailure { ex ->
             logger.error("Um erro ocorreu durante o processamento da requisição de registraChavePix", ex)
@@ -107,16 +111,7 @@ class KeyManagerResource(
             chavePixRepository.findAllByClientId(request.clienteId).map { chave ->
                 //Interagindo na lista retornada do banco e criando novos ChavePixResponse
                 //E adicionando no builder, que será o "corpo do nosso response"
-                builder.addChavesPix(
-                    ChavePixResponse.newBuilder()
-                        .setPixId(chave.id.toString())
-                        .setClienteId(chave.clientId)
-                        .setTipoChave(chave.tipoChave)
-                        .setValorChave(chave.chave)
-                        .setTipoConta(chave.tipoConta)
-                        .setDataCriacao(chave.criadaEm.toGoogleTimestamp())
-                        .build()
-                )
+                builder.addChavesPix(mapToChavePixResponse(chave))
             }
 
             responseObserver.onNext(builder.build())
@@ -144,25 +139,7 @@ class KeyManagerResource(
             logger.info("Consultando dados da conta no ERP")
             val dadosConta = getDadosContaCliente(request.clienteId, chavePix.get().tipoConta)
 
-            val response = ConsultarChavePixPorClienteIdEPixIdResponse.newBuilder()
-                .setPixId(chavePix.get().id.toString())
-                .setClienteId(chavePix.get().clientId)
-                .setTipoChave(chavePix.get().tipoChave)
-                .setValorChave(chavePix.get().chave)
-                .setNomeTitular(dadosConta.titular.nome)
-                .setCpfTitular(dadosConta.titular.cpf)
-                .setContaBancaria(
-                    ContaBancariaResponse.newBuilder()
-                        .setNomeInstituicao(dadosConta.instituicao.nome)
-                        .setAgencia(dadosConta.agencia)
-                        .setNumero(dadosConta.numero)
-                        .setTipo(dadosConta.tipo)
-                        .build()
-                )
-                .setDataCriacao(chavePix.get().criadaEm.toGoogleTimestamp())
-                .build()
-
-            responseObserver.onNext(response)
+            responseObserver.onNext(mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePix, dadosConta))
             responseObserver.onCompleted()
         }.onFailure { ex ->
             logger.error("Um erro ocorreu durante o processamento da requisição de consultarChavePixPorClienteIdEPixId", ex)
@@ -174,7 +151,37 @@ class KeyManagerResource(
         }
     }
 
-    private fun getDadosContaCliente(codigoCliente: String, tipoConta: TipoConta): DadosDaContaResponse{
+    private fun mapToChavePixResponse(chave: ChavePix) = ChavePixResponse.newBuilder()
+        .setPixId(chave.id.toString())
+        .setClienteId(chave.clientId)
+        .setTipoChave(chave.tipoChave)
+        .setValorChave(chave.chave)
+        .setTipoConta(chave.tipoConta)
+        .setDataCriacao(chave.criadaEm.toGoogleTimestamp())
+        .build()
+
+    private fun mapToConsultarChavePixPorClienteIdEPixIdResponse(
+        chavePix: Optional<ChavePix>,
+        dadosConta: DadosDaContaResponse
+    ) = ConsultarChavePixPorClienteIdEPixIdResponse.newBuilder()
+        .setPixId(chavePix.get().id.toString())
+        .setClienteId(chavePix.get().clientId)
+        .setTipoChave(chavePix.get().tipoChave)
+        .setValorChave(chavePix.get().chave)
+        .setNomeTitular(dadosConta.titular.nome)
+        .setCpfTitular(dadosConta.titular.cpf)
+        .setContaBancaria(
+            ContaBancariaResponse.newBuilder()
+                .setNomeInstituicao(dadosConta.instituicao.nome)
+                .setAgencia(dadosConta.agencia)
+                .setNumero(dadosConta.numero)
+                .setTipo(dadosConta.tipo)
+                .build()
+        )
+        .setDataCriacao(chavePix.get().criadaEm.toGoogleTimestamp())
+        .build()
+
+    private fun getDadosContaCliente(codigoCliente: String, tipoConta: TipoConta): DadosDaContaResponse {
         logger.info("Consultando conta do cliente: $codigoCliente no ERP Itau.")
         val erpResponse = erpItauIntegration.buscaContasClientePorTipo(codigoCliente, tipoConta.name)
 

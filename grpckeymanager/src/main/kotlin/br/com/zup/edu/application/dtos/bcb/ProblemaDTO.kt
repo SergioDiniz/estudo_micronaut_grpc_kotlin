@@ -1,8 +1,8 @@
-package br.com.zup.edu.application.dtos
+package br.com.zup.edu.application.dtos.bcb
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-data class BCBProblemaDTO(
+data class ProblemaDTO(
     @JsonProperty(value = "type")
     val tipo: String,
     @JsonProperty(value = "status")

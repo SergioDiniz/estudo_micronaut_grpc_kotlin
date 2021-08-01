@@ -1,8 +1,6 @@
-package br.com.zup.edu.application.dtos
+package br.com.zup.edu.application.dtos.bcb
 
-import br.com.zup.edu.TipoChave
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonValue
 import java.time.LocalDateTime
 
 data class CreatePixKeyResponse(

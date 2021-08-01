@@ -1,7 +1,8 @@
-package br.com.zup.edu.application.dtos
+package br.com.zup.edu.application.dtos.bcb
 
 import br.com.zup.edu.RegistraChavePixRequest
 import br.com.zup.edu.application.constants.ISPB
+import br.com.zup.edu.application.dtos.erp.DadosDaContaResponse
 import br.com.zup.edu.domain.enums.BCBTipoChave
 import br.com.zup.edu.domain.enums.BCBTipoConta
 import br.com.zup.edu.domain.enums.BCBTipoPessoa

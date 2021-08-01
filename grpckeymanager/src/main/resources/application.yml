@@ -2,6 +2,14 @@ micronaut:
   application:
     name: grpckeymanager
 
+
+grpc:
+  server:
+    port: 50051
+    keep-alive-time: 2h
+    max-inbound-message-size: 1024
+
+
 datasources:
   default:
     url: ${DATASOURCE_URL:`jdbc:postgresql://localhost:5432/key_manger_db`}
@@ -25,9 +33,9 @@ jpa:
         show_sql: true
 
 
-itau:
-  contas:
-    url: ${ITAU_ERP_URL:`http://localhost:9091`}
+erp:
+  itau:
+    url: ${ERP_ITAU_URL:`http://localhost:9091`}
 
 bcb:
   external:

@@ -1,4 +1,4 @@
-package br.com.zup.edu.application.dtos
+package br.com.zup.edu.application.dtos.bcb
 
 import br.com.zup.edu.application.constants.ISPB
 import com.fasterxml.jackson.annotation.JsonProperty
