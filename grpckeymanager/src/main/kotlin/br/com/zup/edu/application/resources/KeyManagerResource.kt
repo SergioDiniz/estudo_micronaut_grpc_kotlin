@@ -1,6 +1,9 @@
 package br.com.zup.edu.application.resources
 
 import br.com.zup.edu.ChavePixResponse
+import br.com.zup.edu.ConsultarChavePixPorClienteIdEPixIdRequest
+import br.com.zup.edu.ConsultarChavePixPorClienteIdEPixIdResponse
+import br.com.zup.edu.ContaBancariaResponse
 import br.com.zup.edu.KeyManagerServiceGrpc
 import br.com.zup.edu.ListarChavePixRequest
 import br.com.zup.edu.ListarChavePixResponse
@@ -59,6 +62,7 @@ class KeyManagerResource(
             responseObserver.onNext(response)
             responseObserver.onCompleted()
         }.onFailure { ex ->
+            logger.error("Um erro ocorreu durante o processamento da requisição de registraChavePix", ex)
             if(ex is ChavePixJaCadastradaException) responseObserver.onError(Status.ALREADY_EXISTS.asRuntimeException())
             else responseObserver.onError(Status.INTERNAL.withDescription(ex.message).asRuntimeException())
         }
@@ -89,6 +93,7 @@ class KeyManagerResource(
             responseObserver.onNext(Empty.newBuilder().build())
             responseObserver.onCompleted()
         }.onFailure { ex ->
+            logger.error("Um erro ocorreu durante o processamento da requisição de removerChavePix", ex)
             if(ex is ChavePixNaoCadastradaException) responseObserver.onError(Status.NOT_FOUND.asRuntimeException())
             else responseObserver.onError(Status.INTERNAL.withDescription(ex.message).asRuntimeException())
         }
@@ -117,10 +122,57 @@ class KeyManagerResource(
             responseObserver.onNext(builder.build())
             responseObserver.onCompleted()
         }.onFailure { ex ->
+            logger.error("Um erro ocorreu durante o processamento da requisição de listarChavePix", ex)
             responseObserver.onError(Status.INTERNAL.withDescription(ex.message).asRuntimeException())
         }
     }
 
+    override fun consultarChavePixPorClienteIdEPixId(request: ConsultarChavePixPorClienteIdEPixIdRequest,
+                                                     responseObserver: StreamObserver<ConsultarChavePixPorClienteIdEPixIdResponse>){
+        runCatching {
+            logger.info("Consultando chaves pix por PixId: ${request.pixId} e clienteId ${request.clienteId}.")
+            val chavePix = chavePixRepository.findById(UUID.fromString(request.pixId))
+
+            logger.info("Validando se PixId ${request.pixId} existe.")
+            if(chavePix.isEmpty) throw ChavePixNaoCadastradaException()
+
+            logger.info("Validando se PixId ${request.pixId} pertence ao dono.")
+            if(chavePix.get().clientId != request.clienteId) throw ChaveNaoPertenceAoClienteException(
+                "O PixId : ${request.pixId} não percente ao cliente informado(${request.clienteId})."
+            )
+
+            logger.info("Consultando dados da conta no ERP")
+            val dadosConta = getDadosContaCliente(request.clienteId, chavePix.get().tipoConta)
+
+            val response = ConsultarChavePixPorClienteIdEPixIdResponse.newBuilder()
+                .setPixId(chavePix.get().id.toString())
+                .setClienteId(chavePix.get().clientId)
+                .setTipoChave(chavePix.get().tipoChave)
+                .setValorChave(chavePix.get().chave)
+                .setNomeTitular(dadosConta.titular.nome)
+                .setCpfTitular(dadosConta.titular.cpf)
+                .setContaBancaria(
+                    ContaBancariaResponse.newBuilder()
+                        .setNomeInstituicao(dadosConta.instituicao.nome)
+                        .setAgencia(dadosConta.agencia)
+                        .setNumero(dadosConta.numero)
+                        .setTipo(dadosConta.tipo)
+                        .build()
+                )
+                .setDataCriacao(chavePix.get().criadaEm.toGoogleTimestamp())
+                .build()
+
+            responseObserver.onNext(response)
+            responseObserver.onCompleted()
+        }.onFailure { ex ->
+            logger.error("Um erro ocorreu durante o processamento da requisição de consultarChavePixPorClienteIdEPixId", ex)
+            when(ex){
+                is ChavePixNaoCadastradaException -> responseObserver.onError(Status.NOT_FOUND.asRuntimeException())
+                is ClienteNaoEncontradoException -> responseObserver.onError(Status.NOT_FOUND.withDescription(ex.message).asRuntimeException())
+                else -> responseObserver.onError(Status.INTERNAL.withDescription(ex.message).asRuntimeException())
+            }
+        }
+    }
 
     private fun getDadosContaCliente(codigoCliente: String, tipoConta: TipoConta): DadosDaContaResponse{
         logger.info("Consultando conta do cliente: $codigoCliente no ERP Itau.")

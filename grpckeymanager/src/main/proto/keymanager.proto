@@ -13,6 +13,7 @@ service KeyManagerService {
   rpc registraChavePix(RegistraChavePixRequest) returns (RegistraChavePixResponse) {}
   rpc removerChavePix(RemoverChavePixRequest) returns (google.protobuf.Empty) {}
   rpc listarChavePix(ListarChavePixRequest) returns (ListarChavePixResponse) {}
+  rpc consultarChavePixPorClienteIdEPixId(ConsultarChavePixPorClienteIdEPixIdRequest) returns (ConsultarChavePixPorClienteIdEPixIdResponse) {}
 }
 
 message RegistraChavePixRequest{
@@ -46,6 +47,29 @@ message ChavePixResponse{
   string valorChave = 4;
   TipoConta tipoConta = 5;
   google.protobuf.Timestamp dataCriacao = 6;
+}
+
+message ConsultarChavePixPorClienteIdEPixIdRequest{
+  string pixId = 1;
+  string clienteId = 2;
+}
+
+message ConsultarChavePixPorClienteIdEPixIdResponse{
+  string pixId = 1;
+  string clienteId = 2;
+  TipoChave tipoChave = 3;
+  string valorChave = 4;
+  string nomeTitular = 5;
+  string cpfTitular = 6;
+  ContaBancariaResponse contaBancaria = 7;
+  google.protobuf.Timestamp dataCriacao = 8;
+}
+
+message ContaBancariaResponse{
+  string nomeInstituicao = 1;
+  string agencia = 2;
+  string numero = 3;
+  string tipo = 4;
 }
 
 enum TipoChave{

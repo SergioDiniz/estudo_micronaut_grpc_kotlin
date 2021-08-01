@@ -1,0 +1,13 @@
+{
+  "details": {
+    "endpoint": "http://localhost:50051",
+    "methodFqn": "br.com.zup.edu.KeyManagerService.consultarChavePixPorClienteIdEPixId"
+  },
+  "requests": [
+    {
+      "location": "consultarChavePixPorClienteIdEPixId-request.json"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "grpc"
+}
