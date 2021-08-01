@@ -7,14 +7,18 @@ import br.com.zup.edu.ListarChavePixResponse
 import br.com.zup.edu.RegistraChavePixRequest
 import br.com.zup.edu.RegistraChavePixResponse
 import br.com.zup.edu.RemoverChavePixRequest
+import br.com.zup.edu.TipoChave
 import br.com.zup.edu.TipoConta
+import br.com.zup.edu.application.dtos.CreatePixKeyRequest
 import br.com.zup.edu.application.dtos.DadosDaContaResponse
+import br.com.zup.edu.application.dtos.DeletePixKeyRequest
 import br.com.zup.edu.application.exceptions.ChaveNaoPertenceAoClienteException
 import br.com.zup.edu.application.exceptions.ChavePixJaCadastradaException
 import br.com.zup.edu.application.exceptions.ChavePixNaoCadastradaException
 import br.com.zup.edu.application.exceptions.ClienteNaoEncontradoException
 import br.com.zup.edu.application.extension.toDomain
 import br.com.zup.edu.application.extension.toGoogleTimestamp
+import br.com.zup.edu.application.integration.BCBIntegration
 import br.com.zup.edu.domain.repositories.ChavePixRepository
 import br.com.zup.edu.application.integration.ErpItauIntegration
 import com.google.protobuf.Empty
@@ -28,23 +32,28 @@ import javax.inject.Singleton
 @Singleton
 class KeyManagerResource(
     private val chavePixRepository: ChavePixRepository,
-    private val erpItauIntegration: ErpItauIntegration
+    private val erpItauIntegration: ErpItauIntegration,
+    private val bcbIntegration: BCBIntegration
 ) : KeyManagerServiceGrpc.KeyManagerServiceImplBase() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     override fun registraChavePix(request: RegistraChavePixRequest, responseObserver: StreamObserver<RegistraChavePixResponse>){
         runCatching {
+            //TODO validar todos os valores conforme regra
             logger.info("Validando se chave: ${request.valorChave} ja estar cadastrada.")
             if(chavePixRepository.existsByChave(request.valorChave)) throw ChavePixJaCadastradaException()
 
+            logger.info("Registrando chave no BCB")
             val dadosConta = getDadosContaCliente(request.codigoCliente, request.tipoConta)
-            logger.info("Conta localizada com sucesso no ERP Itau: $dadosConta")
+            val bcbResponse = bcbIntegration.cadastrarChavePix(CreatePixKeyRequest.criar(request, dadosConta)).body()
 
-            val chavePix = chavePixRepository.save(request.toDomain())
+            //Validando se a chave é ALEATORIA para usar o valor do bcbResponse
+            val chavePix = if(request.tipoChave != TipoChave.ALEATORIA) request.toDomain()
+                           else request.toDomain().copy(chave = bcbResponse.chave)
 
             val response = RegistraChavePixResponse.newBuilder()
-                .setPixId(chavePix.id.toString())
+                .setPixId(chavePixRepository.save(chavePix).id.toString())
                 .build()
 
             responseObserver.onNext(response)
@@ -68,6 +77,12 @@ class KeyManagerResource(
                 "O PixId : ${request.pixId} não percente ao cliente informado(${request.codigoCliente})."
             )
 
+            logger.info("Deletando chave pix do BCB.")
+            bcbIntegration.deletarChavePix(
+                chave = chavePix.get().chave,
+                deletePixKeyRequest = DeletePixKeyRequest(chave = chavePix.get().chave)
+            )
+
             logger.info("Deletando PixId ${request.pixId}.")
             chavePixRepository.delete(chavePix.get())
 
@@ -85,6 +100,8 @@ class KeyManagerResource(
 
             logger.info("Consultando todos as chaves pix para o cliente ${request.clienteId}")
             chavePixRepository.findAllByClientId(request.clienteId).map { chave ->
+                //Interagindo na lista retornada do banco e criando novos ChavePixResponse
+                //E adicionando no builder, que será o "corpo do nosso response"
                 builder.addChavesPix(
                     ChavePixResponse.newBuilder()
                         .setPixId(chave.id.toString())
@@ -96,7 +113,7 @@ class KeyManagerResource(
                         .build()
                 )
             }
-            
+
             responseObserver.onNext(builder.build())
             responseObserver.onCompleted()
         }.onFailure { ex ->

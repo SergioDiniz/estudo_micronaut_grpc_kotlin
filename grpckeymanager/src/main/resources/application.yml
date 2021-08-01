@@ -28,3 +28,7 @@ jpa:
 itau:
   contas:
     url: ${ITAU_ERP_URL:`http://localhost:9091`}
+
+bcb:
+  external:
+    url: ${BCB_EXTERNAL_URL:`http://localhost:8082`}

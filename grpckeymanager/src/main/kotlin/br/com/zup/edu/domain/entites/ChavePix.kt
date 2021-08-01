@@ -17,7 +17,7 @@ import javax.persistence.Table
 
 @Entity
 @Table( name = "chave_pix")
-class ChavePix(
+data class ChavePix(
     @Column(nullable = false)
     val clientId: String,
 
@@ -40,12 +40,5 @@ class ChavePix(
 
     @Column(nullable = false)
     val criadaEm: LocalDateTime = LocalDateTime.now()
-
-//    constructor(clientId: String, tipoChave: String, chave: String, tipoConta: String) : this(
-//        clientId,
-//        TipoChave.valueOf(tipoChave),
-//        chave,
-//        TipoConta.valueOf(tipoConta)
-//    )
 }
 
