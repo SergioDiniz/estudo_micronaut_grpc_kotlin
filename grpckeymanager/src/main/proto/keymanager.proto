@@ -14,6 +14,7 @@ service KeyManagerService {
   rpc removerChavePix(RemoverChavePixRequest) returns (google.protobuf.Empty) {}
   rpc listarChavePix(ListarChavePixRequest) returns (ListarChavePixResponse) {}
   rpc consultarChavePixPorClienteIdEPixId(ConsultarChavePixPorClienteIdEPixIdRequest) returns (ConsultarChavePixPorClienteIdEPixIdResponse) {}
+  rpc consultarChavePix(ConsultarChavePixRequest) returns (ConsultarChavePixPorClienteIdEPixIdResponse) {}
 }
 
 message RegistraChavePixRequest{
@@ -63,6 +64,10 @@ message ConsultarChavePixPorClienteIdEPixIdResponse{
   string cpfTitular = 6;
   ContaBancariaResponse contaBancaria = 7;
   google.protobuf.Timestamp dataCriacao = 8;
+}
+
+message ConsultarChavePixRequest{
+  string chavePix = 1;
 }
 
 message ContaBancariaResponse{

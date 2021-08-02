@@ -3,6 +3,7 @@ package br.com.zup.edu.application.resources
 import br.com.zup.edu.ChavePixResponse
 import br.com.zup.edu.ConsultarChavePixPorClienteIdEPixIdRequest
 import br.com.zup.edu.ConsultarChavePixPorClienteIdEPixIdResponse
+import br.com.zup.edu.ConsultarChavePixRequest
 import br.com.zup.edu.ContaBancariaResponse
 import br.com.zup.edu.KeyManagerServiceGrpc
 import br.com.zup.edu.ListarChavePixRequest
@@ -15,6 +16,7 @@ import br.com.zup.edu.TipoConta
 import br.com.zup.edu.application.dtos.bcb.CreatePixKeyRequest
 import br.com.zup.edu.application.dtos.erp.DadosDaContaResponse
 import br.com.zup.edu.application.dtos.bcb.DeletePixKeyRequest
+import br.com.zup.edu.application.dtos.bcb.PixKeyDetailsResponse
 import br.com.zup.edu.application.exceptions.ChaveNaoPertenceAoClienteException
 import br.com.zup.edu.application.exceptions.ChavePixJaCadastradaException
 import br.com.zup.edu.application.exceptions.ChavePixNaoCadastradaException
@@ -139,7 +141,7 @@ class KeyManagerResource(
             logger.info("Consultando dados da conta no ERP")
             val dadosConta = getDadosContaCliente(request.clienteId, chavePix.get().tipoConta)
 
-            responseObserver.onNext(mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePix, dadosConta))
+            responseObserver.onNext(mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePix.get(), dadosConta))
             responseObserver.onCompleted()
         }.onFailure { ex ->
             logger.error("Um erro ocorreu durante o processamento da requisição de consultarChavePixPorClienteIdEPixId", ex)
@@ -151,35 +153,31 @@ class KeyManagerResource(
         }
     }
 
-    private fun mapToChavePixResponse(chave: ChavePix) = ChavePixResponse.newBuilder()
-        .setPixId(chave.id.toString())
-        .setClienteId(chave.clientId)
-        .setTipoChave(chave.tipoChave)
-        .setValorChave(chave.chave)
-        .setTipoConta(chave.tipoConta)
-        .setDataCriacao(chave.criadaEm.toGoogleTimestamp())
-        .build()
+    override fun consultarChavePix(request: ConsultarChavePixRequest, responseObserver: StreamObserver<ConsultarChavePixPorClienteIdEPixIdResponse>){
+        runCatching {
+            val response = if (!chavePixRepository.existsByChave(request.chavePix)) {
+                logger.info("Consultando chaves pix: ${request.chavePix} no BCB.")
+                val chavePixResponse = bcbIntegration.consultarChavePix(request.chavePix).body()
+                mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePixResponse)
+            } else {
+                logger.info("Consultando chaves pix pela chave: ${request.chavePix}.")
+                val chavePix = chavePixRepository.findByChave(request.chavePix)
+                val dadosConta = getDadosContaCliente(chavePix!!.clientId, chavePix.tipoConta)
+                mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePix, dadosConta)
+            }
 
-    private fun mapToConsultarChavePixPorClienteIdEPixIdResponse(
-        chavePix: Optional<ChavePix>,
-        dadosConta: DadosDaContaResponse
-    ) = ConsultarChavePixPorClienteIdEPixIdResponse.newBuilder()
-        .setPixId(chavePix.get().id.toString())
-        .setClienteId(chavePix.get().clientId)
-        .setTipoChave(chavePix.get().tipoChave)
-        .setValorChave(chavePix.get().chave)
-        .setNomeTitular(dadosConta.titular.nome)
-        .setCpfTitular(dadosConta.titular.cpf)
-        .setContaBancaria(
-            ContaBancariaResponse.newBuilder()
-                .setNomeInstituicao(dadosConta.instituicao.nome)
-                .setAgencia(dadosConta.agencia)
-                .setNumero(dadosConta.numero)
-                .setTipo(dadosConta.tipo)
-                .build()
-        )
-        .setDataCriacao(chavePix.get().criadaEm.toGoogleTimestamp())
-        .build()
+            responseObserver.onNext(response)
+            responseObserver.onCompleted()
+        }.onFailure { ex ->
+            logger.error("Um erro ocorreu durante o processamento da requisição de consultarChavePixPorClienteIdEPixId", ex)
+            when (ex) {
+                is ClienteNaoEncontradoException -> responseObserver.onError(
+                    Status.NOT_FOUND.withDescription(ex.message).asRuntimeException()
+                )
+                else -> responseObserver.onError(Status.INTERNAL.withDescription(ex.message).asRuntimeException())
+            }
+        }
+    }
 
     private fun getDadosContaCliente(codigoCliente: String, tipoConta: TipoConta): DadosDaContaResponse {
         logger.info("Consultando conta do cliente: $codigoCliente no ERP Itau.")
@@ -192,5 +190,53 @@ class KeyManagerResource(
 
         return erpResponse.body()
     }
+
+    private fun mapToChavePixResponse(chave: ChavePix) = ChavePixResponse.newBuilder()
+        .setPixId(chave.id.toString())
+        .setClienteId(chave.clientId)
+        .setTipoChave(chave.tipoChave)
+        .setValorChave(chave.chave)
+        .setTipoConta(chave.tipoConta)
+        .setDataCriacao(chave.criadaEm.toGoogleTimestamp())
+        .build()
+
+    private fun mapToConsultarChavePixPorClienteIdEPixIdResponse(
+        chavePix: ChavePix,
+        dadosConta: DadosDaContaResponse
+    ) = ConsultarChavePixPorClienteIdEPixIdResponse.newBuilder()
+        .setPixId(chavePix.id.toString())
+        .setClienteId(chavePix.clientId)
+        .setTipoChave(chavePix.tipoChave)
+        .setValorChave(chavePix.chave)
+        .setNomeTitular(dadosConta.titular.nome)
+        .setCpfTitular(dadosConta.titular.cpf)
+        .setContaBancaria(
+            ContaBancariaResponse.newBuilder()
+                .setNomeInstituicao(dadosConta.instituicao.nome)
+                .setAgencia(dadosConta.agencia)
+                .setNumero(dadosConta.numero)
+                .setTipo(dadosConta.tipo)
+                .build()
+        )
+        .setDataCriacao(chavePix.criadaEm.toGoogleTimestamp())
+        .build()
+
+    private fun mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePixResponse: PixKeyDetailsResponse) =
+        ConsultarChavePixPorClienteIdEPixIdResponse.newBuilder()
+//            .setPixId().setClienteId() //os 2 campos são opcionais para a segunda abordagem
+            .setTipoChave(TipoChave.CPF) //TODO ajustar para ficar dinamico
+            .setValorChave(chavePixResponse.chave)
+            .setNomeTitular(chavePixResponse.dono.nome)
+            .setCpfTitular(chavePixResponse.dono.cpf)
+            .setContaBancaria(
+                ContaBancariaResponse.newBuilder()
+                    .setNomeInstituicao(chavePixResponse.contaBancaria.ispb) //TODO consultar ISPB da Relação de participantes do STR
+                    .setAgencia(chavePixResponse.contaBancaria.agencia)
+                    .setNumero(chavePixResponse.contaBancaria.numero)
+                    .setTipo(chavePixResponse.contaBancaria.tipo.name)
+                    .build()
+            )
+            .setDataCriacao(chavePixResponse.criadoEm.toGoogleTimestamp())
+            .build()
 
 }

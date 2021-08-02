@@ -1,0 +1,12 @@
+{
+  "details": {
+    "methodFqn": "br.com.zup.edu.KeyManagerService.consultarChavePix"
+  },
+  "requests": [
+    {
+      "location": "consultarChavePix-request.json"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "grpc"
+}
