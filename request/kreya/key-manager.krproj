@@ -8,9 +8,7 @@
       "createMissingOperations": true,
       "options": {
         "files": [
-          "../grpckeymanager/src/main/proto/grpckeymanager.proto",
-          "../grpckeymanager/src/main/proto/helloworld.proto",
-          "../grpckeymanager/src/main/proto/keymanager.proto"
+          "../../grpckeymanager/src/main/proto"
         ],
         "importPaths": []
       }

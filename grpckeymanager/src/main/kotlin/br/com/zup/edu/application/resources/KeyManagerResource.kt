@@ -155,21 +155,21 @@ class KeyManagerResource(
 
     override fun consultarChavePix(request: ConsultarChavePixRequest, responseObserver: StreamObserver<ConsultarChavePixPorClienteIdEPixIdResponse>){
         runCatching {
-            val response = if (!chavePixRepository.existsByChave(request.chavePix)) {
-                logger.info("Consultando chaves pix: ${request.chavePix} no BCB.")
-                val chavePixResponse = bcbIntegration.consultarChavePix(request.chavePix).body()
-                mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePixResponse)
-            } else {
+            val response = if (chavePixRepository.existsByChave(request.chavePix)) {
                 logger.info("Consultando chaves pix pela chave: ${request.chavePix}.")
                 val chavePix = chavePixRepository.findByChave(request.chavePix)
                 val dadosConta = getDadosContaCliente(chavePix!!.clientId, chavePix.tipoConta)
                 mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePix, dadosConta)
+            } else {
+                logger.info("Consultando chaves pix: ${request.chavePix} no BCB.")
+                val chavePixResponse = bcbIntegration.consultarChavePix(request.chavePix).body()
+                mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePixResponse)
             }
 
             responseObserver.onNext(response)
             responseObserver.onCompleted()
         }.onFailure { ex ->
-            logger.error("Um erro ocorreu durante o processamento da requisição de consultarChavePixPorClienteIdEPixId", ex)
+            logger.error("Um erro ocorreu durante o processamento da requisição de consultarChavePix", ex)
             when (ex) {
                 is ClienteNaoEncontradoException -> responseObserver.onError(
                     Status.NOT_FOUND.withDescription(ex.message).asRuntimeException()

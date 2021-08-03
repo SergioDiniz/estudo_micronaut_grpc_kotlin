@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.com.zup.edu";
+option java_outer_classname = "Keymanager";
+option objc_class_prefix = "HLW";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+package br.com.zup.edu;
+
+service KeyManagerService {
+  rpc registraChavePix(RegistraChavePixRequest) returns (RegistraChavePixResponse) {}
+  rpc removerChavePix(RemoverChavePixRequest) returns (google.protobuf.Empty) {}
+  rpc listarChavePix(ListarChavePixRequest) returns (ListarChavePixResponse) {}
+  rpc consultarChavePixPorClienteIdEPixId(ConsultarChavePixPorClienteIdEPixIdRequest) returns (ConsultarChavePixPorClienteIdEPixIdResponse) {}
+  rpc consultarChavePix(ConsultarChavePixRequest) returns (ConsultarChavePixPorClienteIdEPixIdResponse) {}
+}
+
+message RegistraChavePixRequest{
+  string codigoCliente = 1;
+  TipoChave TipoChave = 2;
+  string valorChave = 3;
+  TipoConta TipoConta = 4;
+}
+
+message RegistraChavePixResponse{
+  string pixId = 1;
+}
+
+message RemoverChavePixRequest{
+  string pixId = 1;
+  string codigoCliente = 2;
+}
+
+message ListarChavePixRequest{
+  string clienteId = 1;
+}
+
+message ListarChavePixResponse{
+  repeated ChavePixResponse chavesPix = 1;
+}
+
+message ChavePixResponse{
+  string pixId = 1;
+  string clienteId = 2;
+  TipoChave tipoChave = 3;
+  string valorChave = 4;
+  TipoConta tipoConta = 5;
+  google.protobuf.Timestamp dataCriacao = 6;
+}
+
+message ConsultarChavePixPorClienteIdEPixIdRequest{
+  string pixId = 1;
+  string clienteId = 2;
+}
+
+message ConsultarChavePixPorClienteIdEPixIdResponse{
+  string pixId = 1;
+  string clienteId = 2;
+  TipoChave tipoChave = 3;
+  string valorChave = 4;
+  string nomeTitular = 5;
+  string cpfTitular = 6;
+  ContaBancariaResponse contaBancaria = 7;
+  google.protobuf.Timestamp dataCriacao = 8;
+}
+
+message ConsultarChavePixRequest{
+  string chavePix = 1;
+}
+
+message ContaBancariaResponse{
+  string nomeInstituicao = 1;
+  string agencia = 2;
+  string numero = 3;
+  string tipo = 4;
+}
+
+enum TipoChave{
+  CPF = 0;
+  CELULAR = 1;
+  EMAIL = 2;
+  ALEATORIA = 3;
+}
+
+enum TipoConta{
+  CONTA_CORRENTE = 0;
+  CONTA_POUPANCA = 1;
+}

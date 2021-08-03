@@ -1,0 +1,64 @@
+{
+	"info": {
+		"_postman_id": "ccd9ea98-4d8f-4bf2-b65b-0c80accf313c",
+		"name": "zup",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "hello world",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/api/helloworld?nome=Bel",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"helloworld"
+					],
+					"query": [
+						{
+							"key": "nome",
+							"value": "Bel"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "registraChavePix",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"codigoCliente\": \"c56dfef4-7901-44fb-84e2-a2cefb157890\",\r\n    \"tipoChave\": \"CELULAR\",\r\n    \"valorChave\": \"83955554444\",\r\n    \"tipoConta\": \"CONTA_CORRENTE\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/api/v1/pix/chaves",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"pix",
+						"chaves"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

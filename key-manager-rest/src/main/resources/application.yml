@@ -1,0 +1,18 @@
+micronaut:
+  application:
+    name: keyManagerRest
+
+
+grpc:
+  client:
+    plaintext: true
+    max-retry-attempts: 10
+  channels:
+    hello-world:
+      address: 'localhost:50051'
+      plaintext: true
+      max-retry-attempts: 5
+    key-manager:
+      address: 'localhost:50051'
+      plaintext: true
+      max-retry-attempts: 5
