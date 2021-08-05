@@ -27,6 +27,7 @@ import br.com.zup.edu.application.integration.BCBIntegration
 import br.com.zup.edu.domain.repositories.ChavePixRepository
 import br.com.zup.edu.application.integration.ERPItauIntegration
 import br.com.zup.edu.domain.entites.ChavePix
+import br.com.zup.edu.domain.enums.BCBTipoChave
 import com.google.protobuf.Empty
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
@@ -46,7 +47,9 @@ class KeyManagerResource(
 
     override fun registraChavePix(request: RegistraChavePixRequest, responseObserver: StreamObserver<RegistraChavePixResponse>){
         runCatching {
-            //TODO validar todos os valores conforme regra
+            logger.info("Validando valor da chave.")
+            BCBTipoChave.comDescricao(request.tipoChave.name).isValida(request.valorChave)
+
             logger.info("Validando se chave: ${request.valorChave} ja estar cadastrada.")
             if(chavePixRepository.existsByChave(request.valorChave)) throw ChavePixJaCadastradaException()
 
@@ -155,6 +158,9 @@ class KeyManagerResource(
 
     override fun consultarChavePix(request: ConsultarChavePixRequest, responseObserver: StreamObserver<ConsultarChavePixPorClienteIdEPixIdResponse>){
         runCatching {
+            logger.info("Validando chave.")
+            BCBTipoChave.isTamanhoValido(request.chavePix)
+
             val response = if (chavePixRepository.existsByChave(request.chavePix)) {
                 logger.info("Consultando chaves pix pela chave: ${request.chavePix}.")
                 val chavePix = chavePixRepository.findByChave(request.chavePix)
@@ -224,7 +230,7 @@ class KeyManagerResource(
     private fun mapToConsultarChavePixPorClienteIdEPixIdResponse(chavePixResponse: PixKeyDetailsResponse) =
         ConsultarChavePixPorClienteIdEPixIdResponse.newBuilder()
 //            .setPixId().setClienteId() //os 2 campos são opcionais para a segunda abordagem
-            .setTipoChave(TipoChave.CPF) //TODO ajustar para ficar dinamico
+            .setTipoChave(TipoChave.valueOf(chavePixResponse.tipoChave.descricao))
             .setValorChave(chavePixResponse.chave)
             .setNomeTitular(chavePixResponse.dono.nome)
             .setCpfTitular(chavePixResponse.dono.cpf)

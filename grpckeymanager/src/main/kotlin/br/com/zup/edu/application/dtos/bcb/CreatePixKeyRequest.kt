@@ -20,13 +20,13 @@ data class CreatePixKeyRequest(
 ){
     companion object {
         fun criar(request: RegistraChavePixRequest, dadosConta: DadosDaContaResponse) = CreatePixKeyRequest(
-            tipoChave = BCBTipoChave.CPF, //TODO request.tipoChave
+            tipoChave = BCBTipoChave.comDescricao(request.tipoChave.name),
             chave = request.valorChave,
             contaBancaria = ContaBancariaDTO(
                 ispb = ISPB.ITAU_UNIBANCO_SA,
                 agencia = dadosConta.agencia,
                 numero = dadosConta.numero,
-                tipo = BCBTipoConta.CACC //TODO dadosConta.tipo
+                tipo = BCBTipoConta.comDescricao(dadosConta.tipo)
             ),
             dono = DonoInfoDTO(
                 tipo = BCBTipoPessoa.NATURAL_PERSON, //TODO de onde pegar?
