@@ -14,7 +14,7 @@ enum class BCBTipoChave(val descricao: String) {
     },
     RANDOM("ALEATORIA") {
         override fun isValida(chave: String): Boolean {
-            if(chave.isEmpty()) return true
+            if(chave.isNullOrEmpty()) return true
             throw CampoInvalidoException(MENSAGEM_DE_ERRO.format(RANDOM.descricao, "STRING VAZIA"))
         }
     },
@@ -42,7 +42,7 @@ enum class BCBTipoChave(val descricao: String) {
         }
 
         fun isTamanhoValido(chave: String): Boolean{
-            if(chave.isBlank()) throw CampoInvalidoException("O campo chave não pode ser vazio.")
+            if(chave.isNullOrBlank()) throw CampoInvalidoException("O campo chave não pode ser nulo ou vazio.")
             if(chave.length > TAMANHO_MAXIMO_CHAVE)
                 throw CampoInvalidoException("Tamanho maximo de $TAMANHO_MAXIMO_CHAVE caracteres excedido para o campo chave.")
             return true
